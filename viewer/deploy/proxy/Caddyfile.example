@@ -1,0 +1,13 @@
+# Caddy: serve the viewer at /vr on the same origin as Immich.
+#
+# Same origin is the whole point: the Immich session cookie then authenticates
+# the viewer's API and video requests, and no CORS headers are needed (Immich
+# sends none). handle_path strips the /vr prefix before proxying.
+immich.example.com {
+	handle_path /vr* {
+		reverse_proxy 127.0.0.1:8088
+	}
+	handle {
+		reverse_proxy 127.0.0.1:2283
+	}
+}

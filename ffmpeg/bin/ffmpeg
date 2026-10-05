@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Run the containerised MVC-capable ffmpeg (or ffprobe, via the symlink) as if it
+# were installed locally.
+#
+# The current directory, plus every directory listed in MVC_MOUNTS (one per line,
+# ":ro" suffix for read-only), is bind-mounted at the same path, so file paths on
+# the command line mean the same inside the container as outside. /dev/dri is
+# passed through when present, for VAAPI encoding.
+set -euo pipefail
+
+root=$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)
+tool=$(basename "$0")
+image=${IMAGE:-immich-3d-ffmpeg}
+bin=$root/build/$tool
+if [[ ! -x $bin ]]; then
+    echo "$tool: not built yet — run $root/build.sh" >&2
+    exit 127
+fi
+
+args=(--rm -i --user "$(id -u):$(id -g)" -w "$PWD")
+declare -A seen=()
+add_mount() {   # add_mount <dir> [ro]
+    local dir=$1 mode=${2:-}
+    [[ -n ${seen[$dir]:-} ]] && return
+    seen[$dir]=1
+    args+=(-v "$dir:$dir${mode:+:$mode}")
+}
+add_mount "$root/build" ro
+add_mount "$PWD"
+while IFS= read -r m; do
+    [[ -z $m ]] && continue
+    if [[ $m == *:ro ]]; then add_mount "${m%:ro}" ro; else add_mount "$m"; fi
+done <<< "${MVC_MOUNTS:-}"
+
+if [[ -e /dev/dri/renderD128 ]]; then
+    args+=(--device /dev/dri --group-add "$(stat -c %g /dev/dri/renderD128)")
+fi
+
+exec docker run "${args[@]}" "$image" "$bin" "$@"

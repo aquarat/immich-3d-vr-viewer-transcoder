@@ -1,0 +1,28 @@
+# Traefik (file provider): serve the viewer at /vr on the same origin as Immich.
+#
+# Drop this into the directory Traefik's file provider watches; it is picked up
+# without a restart. The rule is longer than a plain Host() rule for Immich, and
+# Traefik orders routers by rule length, so this one wins for /vr/* without an
+# explicit priority.
+#
+# If Immich is also reachable through a tunnel or CDN (Cloudflare Tunnel, say),
+# make sure that path ends at Traefik too. A tunnel that points straight at
+# Immich's own port bypasses this router, and /vr/ then gets Immich's 404 page.
+http:
+  routers:
+    immich-vr:
+      rule: Host(`immich.example.com`) && PathPrefix(`/vr`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      middlewares: [immich-vr-strip]
+      service: immich-vr
+  middlewares:
+    immich-vr-strip:
+      stripPrefix:
+        prefixes: ["/vr"]
+  services:
+    immich-vr:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:8088

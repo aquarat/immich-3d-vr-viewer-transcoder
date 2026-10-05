@@ -1,0 +1,81 @@
+:root{
+  color-scheme: dark;
+  --bg:#12131a; --panel:#1b1d27; --line:#2b2e3d; --ink:#e6e8f0; --dim:#9aa0b4;
+  --ok:#4ade80; --warn:#fbbf24; --fail:#f87171; --info:#60a5fa;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:0 16px 48px}
+header{max-width:900px;margin:0 auto;padding:28px 0 8px}
+main{max-width:900px;margin:0 auto}
+h1{font-size:22px;margin:0 0 6px;font-weight:650}
+h2{font-size:15px;margin:0 0 12px;font-weight:650;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.06em}
+.tag{font-size:12px;font-weight:500;color:var(--dim);background:var(--panel);
+  border:1px solid var(--line);border-radius:999px;padding:3px 9px;margin-left:8px;
+  text-transform:none;letter-spacing:0;vertical-align:middle}
+.sub{color:var(--dim);margin:0;max-width:62ch}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:18px;margin:18px 0}
+.report{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);
+  border-radius:8px;overflow:hidden}
+.report:empty{display:none}
+.r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:12px;
+  background:var(--panel);padding:8px 12px;align-items:baseline}
+.r .k{color:var(--dim);min-width:0;overflow-wrap:anywhere}
+.r .v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+  min-width:0;overflow-wrap:anywhere}
+.r .v::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
+  margin-right:8px;background:var(--dim);vertical-align:middle}
+.r.ok   .v::before{background:var(--ok)}
+.r.warn .v::before{background:var(--warn)}
+.r.fail .v::before{background:var(--fail)}
+.r.info .v::before{background:var(--info)}
+.r .note{grid-column:1/-1;color:var(--dim);font-size:13px;margin-top:2px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 0}
+label{color:var(--dim);font-size:13px;display:flex;gap:8px;align-items:center}
+output{font-family:ui-monospace,monospace;color:var(--ink)}
+button,select,input[type=password]{font:inherit;color:var(--ink);background:#262a37;
+  border:1px solid var(--line);border-radius:8px;padding:9px 14px;min-height:40px}
+button{cursor:pointer;font-weight:600;background:#3b4256}
+button:hover:not(:disabled){background:#49506a}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{background:transparent}
+input[type=range]{accent-color:var(--info);min-width:160px;flex:1 1 160px}
+input[type=password]{flex:1 1 260px;min-width:0}
+.hint{color:var(--dim);font-size:13px;margin:12px 0 0;max-width:70ch}
+code{font-family:ui-monospace,monospace;background:#262a37;padding:1px 5px;border-radius:4px;font-size:.9em}
+pre{background:#0d0e14;border:1px solid var(--line);border-radius:8px;padding:12px;
+  overflow-x:auto;font-size:12.5px;line-height:1.55;max-height:420px;margin:14px 0 0}
+
+/* ---------------------------------------------------------------- player */
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:10px;margin-top:16px}
+.thumb{position:relative;aspect-ratio:16/9;border-radius:8px;overflow:hidden;
+  border:2px solid transparent;background:#0d0e14;cursor:pointer;padding:0;margin:0}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb[aria-selected="true"]{border-color:var(--info)}
+.thumb figcaption{position:absolute;left:0;right:0;bottom:0;padding:4px 6px;
+  font-size:11px;background:linear-gradient(transparent,rgba(0,0,0,.8));
+  color:var(--ink);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip{background:#262a37;border:1px solid var(--line);border-radius:999px;
+  padding:8px 14px;cursor:pointer;font-weight:600;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--info);border-color:var(--info);color:#0d0e14}
+details{margin-top:16px}
+summary{cursor:pointer;color:var(--dim);font-size:13px;padding:6px 0}
+a{color:var(--info)}
+
+/* Pinned so a clip can be picked far down the grid and played without
+   scrolling back to the top. */
+.actionbar{position:fixed;left:0;right:0;bottom:0;z-index:20;
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  background:rgba(27,29,39,.96);border-top:1px solid var(--line);
+  backdrop-filter:blur(10px)}
+.actionbar .hint{margin:0;flex:1 1 200px;min-width:0}
+body{padding-bottom:104px}
+
+footer.source{max-width:900px;margin:24px auto 0;color:var(--dim);font-size:13px}

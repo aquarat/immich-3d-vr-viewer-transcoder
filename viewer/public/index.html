@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<base href="/vr/">
+<title>Immich VR</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Immich VR <span id="who" class="tag">connecting…</span></h1>
+  <p class="sub">Stereoscopic and 360 media from your library, in the headset.
+  Pick a collection, double-tap a clip, and put it on.</p>
+</header>
+
+<main>
+  <section>
+    <div class="controls" id="collections"></div>
+    <details id="settings">
+      <summary>Viewing options</summary>
+      <div class="controls">
+        <label><input id="passthrough" type="checkbox" checked> Passthrough</label>
+        <label><input id="grid" type="checkbox"> Grid background (uses WebGL)</label>
+        <label><input id="sound" type="checkbox" checked> Sound</label>
+      </div>
+      <div class="controls">
+        <label for="stereo">Stereo</label>
+        <select id="stereo">
+          <option value="auto">auto (from collection)</option>
+          <option value="stereo-left-right">force side-by-side</option>
+          <option value="stereo-top-bottom">force top/bottom</option>
+          <option value="mono">force mono</option>
+        </select>
+        <label for="texture">Photo detail</label>
+        <select id="texture">
+          <option value="2048">2048 — lightest</option>
+          <option value="4096" selected>4096 — default</option>
+          <option value="8192">8192 — sharpest, most memory</option>
+        </select>
+        <label for="photo-path">Photos via</label>
+        <select id="photo-path">
+          <option value="media" selected>media layer — works in passthrough</option>
+          <option value="gl">WebGL — older, needs passthrough off</option>
+        </select>
+        <label for="mode">Render path</label>
+        <select id="mode">
+          <option value="media-layer">WebXR media layer</option>
+          <option value="webgl">WebGL fallback</option>
+        </select>
+      </div>
+      <div class="controls">
+        <label for="width">Panel width (m) <output id="width-out"></output></label>
+        <input id="width" type="range" min="0.5" max="12" step="0.1" value="3.2">
+        <label for="dist">Distance (m) <output id="dist-out"></output></label>
+        <input id="dist" type="range" min="1" max="12" step="0.1" value="3">
+      </div>
+      <div class="controls">
+        <button id="reset-layout" class="ghost">Reset positions</button>
+        <span id="layout-note" class="hint"></span>
+      </div>
+      <p class="hint">In the headset, with hands or controllers: the control panel
+      sits under the video. <b>Point and pinch</b> a button to press it, or pinch the
+      progress bar and slide to scrub. <b>Pinch and drag</b> the video, or the panel's
+      background, to move it. The <b>link</b> button decides whether they move
+      together (the default) or separately. Tap the video, or empty space, to play
+      or pause; <b>pinch and hold on empty space</b> to leave, or use Exit VR.
+      The <b>Browse</b> button (four squares) opens a pane of every collection:
+      tap a thumbnail to play it, drag the grid or flick it to scroll, or grab the
+      bar on its right edge to jump through a long list.
+      Positions are remembered. Double-tap a thumbnail here to go straight in.</p>
+    </details>
+  </section>
+
+  <section>
+    <div id="status" class="report"></div>
+    <div id="grid-view" class="thumbs"></div>
+    <p id="empty" class="hint" hidden></p>
+  </section>
+
+  <details>
+    <summary>Diagnostics</summary>
+    <p class="hint">Also available: the <a href="probe.html">capability probe</a>.</p>
+    <pre id="log"></pre>
+  </details>
+</main>
+
+<!-- AGPL-3.0 section 13: people using this over a network are entitled to its
+     source. If you run a modified copy, point this at your own. -->
+<footer class="source">
+  <a href="https://github.com/aquarat/immich-3d-vr-viewer-transcoder">Source code</a> · AGPL-3.0
+</footer>
+
+<div class="actionbar">
+  <button id="enter" disabled>Enter VR</button>
+  <button id="exit" class="ghost" disabled>Exit</button>
+  <button id="reload" class="ghost" hidden>Reload page</button>
+  <span id="selection" class="hint"></span>
+</div>
+
+<video id="video" playsinline style="display:none"></video>
+<canvas id="canvas" style="display:none"></canvas>
+
+<script src="common.js"></script>
+<script src="xr.js"></script>
+<script src="player.js"></script>
+</body>
+</html>

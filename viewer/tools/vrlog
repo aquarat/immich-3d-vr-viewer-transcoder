@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""Read back what the headset reported.
+
+    tools/vrlog              latest delivery, in full
+    tools/vrlog -n 5         the last five
+    tools/vrlog --fails      only rows that failed or warned
+    tools/vrlog --raw        the underlying JSON lines
+"""
+import argparse
+import glob
+import json
+import os
+import sys
+
+LOG_GLOB = os.path.join(os.path.dirname(__file__), '..', 'deploy', 'logs', 'vr-*.jsonl')
+MARK = {'ok': '  ok  ', 'warn': ' warn ', 'fail': ' FAIL ', 'info': '      '}
+
+
+def records():
+    for path in sorted(glob.glob(LOG_GLOB)):
+        with open(path, encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        yield json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+
+
+def show(rec, only_bad):
+    p = rec.get('payload', {})
+    dev = p.get('device', {})
+    print(f"\n=== {rec.get('at')}  reason={p.get('reason')}  session={p.get('session')}")
+    if dev:
+        print(f"    {dev.get('ua', '')[:110]}")
+        print(f"    screen {dev.get('screen')} dpr {dev.get('dpr')} cores {dev.get('cores')} "
+              f"secure {dev.get('secure')}")
+        print(f"    {dev.get('href')}")
+    rows = p.get('rows', [])
+    if only_bad:
+        rows = [r for r in rows if r.get('status') in ('fail', 'warn')]
+    for r in rows:
+        print(f"  [{MARK.get(r.get('status'), '      ')}] {r.get('key'):<22} {r.get('value')}")
+        if r.get('note'):
+            print(f"{'':>12}{r['note']}")
+    log = p.get('log', [])
+    if log and not only_bad:
+        print("  --- log ---")
+        for line in log[-40:]:
+            print(f"    {line}")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('-n', type=int, default=1, help='how many recent deliveries to show')
+    ap.add_argument('--fails', action='store_true', help='only fail/warn rows')
+    ap.add_argument('--raw', action='store_true', help='print raw JSON lines')
+    args = ap.parse_args()
+
+    recs = list(records())
+    if not recs:
+        print('no reports yet', file=sys.stderr)
+        return 1
+    for rec in recs[-args.n:]:
+        if args.raw:
+            print(json.dumps(rec, indent=2))
+        else:
+            show(rec, args.fails)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

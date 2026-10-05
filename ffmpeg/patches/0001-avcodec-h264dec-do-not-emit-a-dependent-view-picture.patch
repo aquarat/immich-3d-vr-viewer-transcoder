@@ -1,0 +1,66 @@
+From c9d7f242a91cc2ea5f924d51e37830e3312ac4ff Mon Sep 17 00:00:00 2001
+From: aquarat <blue@aquarat.co.uk>
+Date: Mon, 14 Sep 2026 22:36:21 +0100
+Subject: [PATCH 1/4] avcodec/h264dec: do not emit a dependent view picture
+ holding only a first field
+
+In a field coded MVC access unit the base view's second field is decoded before
+the dependent view's. A non-reference base view picture can therefore leave the
+reorder buffer while its dependent view partner holds only its first field.
+Emitting the partner at that point output it half decoded, and again once its
+second field had been decoded, so every non-reference frame of the dependent
+view came out twice (851 frames instead of 555 on a Sony HDR-TD10 AVCHD 3D clip).
+
+Keep the pairing until the partner's second field has started.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012sK2py5V81UwVc4ofRaMXC
+---
+ libavcodec/h264dec.c | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/libavcodec/h264dec.c b/libavcodec/h264dec.c
+index 6daf52fd19..30afa64d31 100644
+--- a/libavcodec/h264dec.c
++++ b/libavcodec/h264dec.c
+@@ -1096,6 +1096,21 @@ static int finalize_frame(H264Context *h, H264Picture *out)
+     return 0;
+ }
+ 
++/* Whether pic is the first field of a complementary pair whose second field has
++ * not been started yet, in whichever view it belongs to. */
++static int dep_mid_field_pair(const H264Context *h, const H264Picture *pic)
++{
++    for (unsigned v = 1; v < h->nb_views; v++) {
++        if (v == h->cur_view) {
++            if (h->cur_pic_ptr == pic && FIELD_PICTURE(h) && h->first_field)
++                return 1;
++        } else if (h->views[v].pending_field_pic == pic && h->views[v].first_field) {
++            return 1;
++        }
++    }
++    return 0;
++}
++
+ /**
+  * Resolve the dependent view pictures paired with a base view picture that has
+  * left the reorder buffer.
+@@ -1118,6 +1133,15 @@ int ff_h264_resolve_view_pair(H264Context *h, H264Picture *base, int output,
+             &h->DPB[dep->base_view_pic] != base)
+             continue;
+ 
++        /* In a field coded access unit the base view's second field is decoded
++         * before the dependent view's, so a non-reference base view picture can
++         * leave the reorder buffer while its partner holds only a first field.
++         * Keep the link: the partner's second field comes back here once it has
++         * started, and emitting it now would output it twice, the first time
++         * half decoded. */
++        if (dep_mid_field_pair(h, dep))
++            continue;
++
+         dep->base_view_pic = -1;
+         dep->reference    &= ~DELAYED_PIC_REF;
+ 
+-- 
+2.55.0
+

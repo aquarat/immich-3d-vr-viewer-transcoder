@@ -1,0 +1,38 @@
+From 325731eafe1cbb927b1ddf68ae2a7eff6db81a4c Mon Sep 17 00:00:00 2001
+From: aquarat <blue@aquarat.co.uk>
+Date: Mon, 14 Sep 2026 22:36:21 +0100
+Subject: [PATCH 2/4] avcodec/h264_slice: carry the cropping over to frame
+ threads
+
+Dependent view pictures are started after setup has finished, where
+init_dimensions() does not run, so under frame threading they took whatever
+cropping the thread context had, typically none: 1920x1088 output for a
+1920x1080 stream.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012sK2py5V81UwVc4ofRaMXC
+---
+ libavcodec/h264_slice.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/libavcodec/h264_slice.c b/libavcodec/h264_slice.c
+index 64f138d04d..c95291948c 100644
+--- a/libavcodec/h264_slice.c
++++ b/libavcodec/h264_slice.c
+@@ -428,6 +428,13 @@ int ff_h264_update_thread_context(AVCodecContext *dst,
+ 
+     h->width_from_caller    = h1->width_from_caller;
+     h->height_from_caller   = h1->height_from_caller;
++
++    /* Dependent view pictures are started once setup has finished, where
++     * init_dimensions() is not run, so they rely on the inherited cropping. */
++    h->crop_left            = h1->crop_left;
++    h->crop_right           = h1->crop_right;
++    h->crop_top             = h1->crop_top;
++    h->crop_bottom          = h1->crop_bottom;
+     h->first_field          = h1->first_field;
+     h->picture_structure    = h1->picture_structure;
+     h->mb_aff_frame         = h1->mb_aff_frame;
+-- 
+2.55.0
+

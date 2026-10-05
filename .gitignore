@@ -1,0 +1,14 @@
+# FFmpeg source and build output (see ffmpeg/build.sh)
+ffmpeg/build/
+ffmpeg/src/
+
+# Viewer: optional local probe fixtures name assets in your own library
+viewer/public/test-assets.json
+
+# Transcoder run output
+mvc2sbs-logs/
+*.jsonl
+!viewer/deploy/logs/.gitignore
+
+__pycache__/
+*.pyc

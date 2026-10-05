@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<base href="/vr/">
+<title>Immich VR — capability probe</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Immich VR <span class="tag">step 1 · capability probe</span></h1>
+  <p class="sub">Answers three questions before any viewer gets written: does this browser expose WebXR
+  media layers, will it decode the 3840&times;1080 HEVC camcorder footage, and does the Immich API
+  authenticate from this origin.</p>
+</header>
+
+<main>
+  <section id="auth-section">
+    <h2>1 · Immich API access</h2>
+    <div id="auth-report" class="report"></div>
+    <div class="controls">
+      <input id="apikey" type="password" placeholder="Immich API key (optional fallback)" autocomplete="off">
+      <button id="save-key">Save key</button>
+      <button id="clear-key" class="ghost">Clear</button>
+      <button id="recheck" class="ghost">Re-check</button>
+    </div>
+    <p class="hint">Video elements cannot send an <code>x-api-key</code> header, so playback relies on the
+    same-origin Immich session cookie. Log into Immich in this browser first. The key is only used for
+    <code>fetch()</code> probes, and to test whether query-string auth is accepted.</p>
+  </section>
+
+  <section>
+    <h2>2 · Browser capabilities</h2>
+    <div id="caps-report" class="report"></div>
+  </section>
+
+  <section>
+    <h2>3 · Codec decode</h2>
+    <div id="codec-report" class="report"></div>
+  </section>
+
+  <section>
+    <h2>4 · Enter VR</h2>
+    <div class="controls">
+      <label for="asset">Fixture</label>
+      <select id="asset"></select>
+    </div>
+    <div class="controls">
+      <label for="mode">Render path</label>
+      <select id="mode">
+        <option value="media-layer">WebXR media layer (preferred)</option>
+        <option value="webgl">WebGL two-eye fallback</option>
+      </select>
+      <label><input id="passthrough" type="checkbox" checked> Passthrough</label>
+      <label><input id="grid" type="checkbox" checked> Grid background</label>
+      <label><input id="sound" type="checkbox" checked> Sound</label>
+      <label for="stereo">Stereo</label>
+      <select id="stereo">
+        <option value="auto">auto (from fixture)</option>
+        <option value="stereo-left-right">force SBS</option>
+        <option value="stereo-top-bottom">force top/bottom</option>
+        <option value="mono">force mono</option>
+      </select>
+    </div>
+    <div class="controls">
+      <label for="width">Quad width (m) <output id="width-out"></output></label>
+      <input id="width" type="range" min="0.5" max="12" step="0.1" value="3.2">
+      <label for="dist">Distance (m) <output id="dist-out"></output></label>
+      <input id="dist" type="range" min="1" max="12" step="0.1" value="3">
+    </div>
+    <div class="controls">
+      <button id="enter" disabled>Enter VR</button>
+      <button id="exit" class="ghost" disabled>Exit</button>
+    </div>
+    <div id="session-report" class="report"></div>
+  </section>
+
+  <section>
+    <h2>Log</h2>
+    <div class="controls">
+      <button id="copy-log" class="ghost">Copy log</button>
+      <button id="clear-log" class="ghost">Clear</button>
+    </div>
+    <pre id="log"></pre>
+  </section>
+</main>
+
+<!-- AGPL-3.0 section 13: people using this over a network are entitled to its
+     source. If you run a modified copy, point this at your own. -->
+<footer class="source">
+  <a href="https://github.com/aquarat/immich-3d-vr-viewer-transcoder">Source code</a> · AGPL-3.0
+</footer>
+
+<video id="video" playsinline style="display:none"></video>
+<canvas id="canvas" style="display:none"></canvas>
+
+<script src="xr.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
