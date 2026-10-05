@@ -17,6 +17,10 @@ where the same files are on this machine.
 Each file is dropped from the page cache after reading, which matters when this
 runs on the same machine as Immich's database: thousands of files left in cache
 can push a memory-tight host into swap.
+
+With --cache, a file already checked is not read again unless its size or
+modification time has changed, so a nightly run reads only what is new. The
+first run with a fresh cache reads everything.
 """
 import argparse
 import os
@@ -41,6 +45,7 @@ def main():
     ap.add_argument('--all-videos', action='store_true', help='consider every video, whatever the camera')
     ap.add_argument('--tail', type=int, default=1_500_000, help='bytes read from the end of each file')
     ap.add_argument('--limit', type=int, help='stop after this many candidates (for a trial run)')
+    ap.add_argument('--cache', help='remember results here (TSV) and skip unchanged files next time')
     args = ap.parse_args()
 
     maps = []
@@ -66,8 +71,18 @@ where {' and '.join(where)} order by a."fileCreatedAt" desc;""")
     paths = [r[0] for r in rows][:args.limit]
     print(f'scanning {len(paths)} candidate videos', file=sys.stderr)
 
+    # path -> (size, mtime_ns, spatial): a file is only read again if it changed.
+    cache = {}
+    if args.cache and os.path.exists(args.cache):
+        with open(args.cache) as f:
+            for line in f:
+                parts = line.rstrip('\n').split('\t')
+                if len(parts) == 4:
+                    cache[parts[0]] = (int(parts[1]), int(parts[2]), parts[3] == '1')
+
     t0 = time.time()
-    found = missing = 0
+    found = missing = read = 0
+    fresh = {}
     for i, p in enumerate(paths, 1):
         try:
             fd = os.open(local(p), os.O_RDONLY)
@@ -77,19 +92,34 @@ where {' and '.join(where)} order by a."fileCreatedAt" desc;""")
                 print(f'cannot open {local(p)!r} — is a --path-map needed?', file=sys.stderr)
             continue
         try:
-            size = os.fstat(fd).st_size
-            os.lseek(fd, max(0, size - args.tail), os.SEEK_SET)
-            tail = os.read(fd, args.tail)
-            os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+            st = os.fstat(fd)
+            known = cache.get(p)
+            if known and known[:2] == (st.st_size, st.st_mtime_ns):
+                spatial = known[2]
+            else:
+                os.lseek(fd, max(0, st.st_size - args.tail), os.SEEK_SET)
+                spatial = b'vexu' in os.read(fd, args.tail)
+                os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+                read += 1
         finally:
             os.close(fd)
-        if b'vexu' in tail:
+        fresh[p] = (st.st_size, st.st_mtime_ns, spatial)
+        if spatial:
             found += 1
             print(p, flush=True)        # Immich's own path, as backfill-albums.py expects
         if i % 500 == 0:
-            print(f'  {i}/{len(paths)} · {found} spatial · {time.time() - t0:.0f}s', file=sys.stderr, flush=True)
-    print(f'done: {found} spatial of {len(paths)} ({missing} unreadable) in {time.time() - t0:.0f}s',
-          file=sys.stderr)
+            print(f'  {i}/{len(paths)} · {read} read · {found} spatial · {time.time() - t0:.0f}s',
+                  file=sys.stderr, flush=True)
+
+    if args.cache and not args.limit:
+        # Only what still exists is kept; written whole, then moved into place.
+        tmp = args.cache + '.tmp'
+        with open(tmp, 'w') as f:
+            for p, (size, mtime, spatial) in fresh.items():
+                f.write(f'{p}\t{size}\t{mtime}\t{int(spatial)}\n')
+        os.replace(tmp, args.cache)
+    print(f'done: {found} spatial of {len(paths)}, {read} read, {len(paths) - read - missing} unchanged, '
+          f'{missing} unreadable, in {time.time() - t0:.0f}s', file=sys.stderr)
 
 
 if __name__ == '__main__':

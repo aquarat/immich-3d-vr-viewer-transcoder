@@ -66,6 +66,21 @@ To find spatial video (it takes a while; the marker is at the end of each file):
 ./backfill-albums.py --spatial-list spatial.txt
 ```
 
+To keep the albums current as new media arrives, run `tools/refresh-albums.sh`
+daily from cron. It finds new spatial video, then adds anything new to all three
+albums. A cache means it reads only files that are new or changed, so after a
+first full pass it is quick:
+
+```sh
+0 5 * * * /path/to/viewer/tools/refresh-albums.sh >> ~/.local/state/immich-3d/refresh.log 2>&1
+```
+
+It reads its settings from `~/.config/immich-3d/env` (the database settings
+above, `SPATIAL_PATH_MAPS`, and so on — see the script's header). It also needs
+an API key in `~/.config/immich-3d/api-key`, readable only by you. The key
+needs just four permissions: `user.read`, `album.read`, `album.create` and
+`albumAsset.create`.
+
 ### 2. The container
 
 ```sh
