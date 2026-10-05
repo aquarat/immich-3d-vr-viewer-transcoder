@@ -1,5 +1,11 @@
 # immich-3d-vr-viewer-transcoder
 
+Note from the author (or owner/steward hah):
+I've experimented with 3D video for quite some time. Some of these experiments involved filming events, trips, etc. with 3D camcorders from circa 2012, like the Sony HDR-TD10 and JVC GS-TD1. These cameras recorded in a clever format called H.264 MVC (multi-view coding). This codec worked by recording a primary video stream for the left lens and then a delta stream for the right lens. This was bitrate efficient but unfortunately the tools around this codec never really developed in the open source ecosystem and so this footage was largely inaccessible 3D-wise for a long time.
+
+In more recent times others have done work to extend this, and of course, we now have "AI" agents.
+
+
 Watch the stereoscopic 3D and 360° photos and videos in your
 [Immich](https://immich.app) library in a VR headset — and convert old 3D
 camcorder footage into a format that modern players and headsets understand.
