@@ -92,6 +92,13 @@ This serves `public/` on port 8088, plus a small collector that receives
 diagnostics from the headset. If your reverse proxy runs on the same machine,
 bind the port to loopback in `docker-compose.yml`.
 
+The collector only accepts reports from someone logged in to Immich. Before
+passing a report on, nginx asks Immich's `/api/users/me` whether the report's
+own session cookie or API key belongs to a user, and anything else is turned
+away. This assumes Immich is published on the same machine's port 2283, as in
+Immich's own compose file. If yours is elsewhere, change the `upstream` at the
+top of `deploy/nginx.conf`.
+
 ### 3. The route
 
 Send `/vr/` on your Immich hostname to port 8088, stripping the `/vr` prefix.

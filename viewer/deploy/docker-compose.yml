@@ -13,6 +13,10 @@ services:
     image: nginx:1.27-alpine
     container_name: immich-vr-static
     restart: unless-stopped
+    # Lets nginx reach Immich on this host's port 2283, to check that a
+    # diagnostics report comes from someone logged in (see nginx.conf).
+    extra_hosts:
+      - host.docker.internal:host-gateway
     ports:
       - '8088:8088'
     volumes:
